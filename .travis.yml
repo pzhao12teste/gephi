@@ -21,8 +21,7 @@ before_install:
 - find $HOME/CACHE -name .ekstazi | while read line; do du -sh $line;         DIR=$(dirname
   ${line#$HOME/CACHE}); if [[ -d ${DIR#.ekstazi/} ]]; then cp -r $line $DIR; fi; done
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export JAVA_HOME=$(/usr/libexec/java_home);fi
-- if [ "$TRAVIS_OS_NAME" == "linux" ]; then git clone --branch 1.6 --single-branch
-  https://github.com/dscharrer/innoextract.git;fi
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then git clone --branch 1.5 https://github.com/dscharrer/innoextract.git;fi
 - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cd innoextract && mkdir -p build && cd
   build && cmake .. && make && export PATH=$PATH:$PWD && cd ../..;fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then openssl aes-256-cbc -k "$ENCRYPTION_SECRET"
@@ -76,7 +75,7 @@ matrix:
 script:
 - touch /tmp/NOW
 - echo GIBSTUDYSTART $(date)
-- if [ "$TRAVIS_OS_NAME" == "linux" ]; then travis_retry mvn --batch-mode --settings
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then travis_retry mvn -T 2 --batch-mode --settings
   ~/settings.xml -Djava.awt.headless=true -Dgpg.defaultKeyring=false -Dgpg-keyname=1481F619
   -Dgpg.publicKeyring=src/travis/pubring.gpg -Dgpg.secretKeyring=src/travis/secretring.gpg
   clean deploy -P deployment,create-modules,create-sources,create-javadoc,create-autoupdate,replace-windows-icon,create-exe,create-targz;fi
@@ -84,6 +83,8 @@ script:
   ~/settings.xml -Djava.awt.headless=true -Dgpg.defaultKeyring=false -Dgpg-keyname=1481F619
   -Dgpg.publicKeyring=src/travis/pubring.gpg -Dgpg.secretKeyring=src/travis/secretring.gpg
   clean deploy -P deployment,create-dmg;fi
+- if [ "$TRAVIS_OS_NAME" == "linux" -a "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST"
+  == "false" ]; then mvn versioneye:update; fi
 - echo GIBSTUDYEND $(date)
 - cd $TRAVIS_BUILD_DIR
 - echo TESTNUM $(find . -name TEST-*.xml -newer /tmp/NOW | wc -l)
